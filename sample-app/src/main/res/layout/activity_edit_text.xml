@@ -97,5 +97,21 @@
             app:pinCharacterSpacing="6dp"
             app:pinLineColors="@color/pin_line_colors"
             app:pinRepeatedHint="#" />
+
+        <com.alimuzaffar.lib.pin.PinEntryEditText
+            android:id="@+id/txt_pin_entry4"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:background="@null"
+            android:cursorVisible="false"
+            android:digits="1234567890"
+            android:inputType="numberPassword"
+            android:maxLength="6"
+            android:textIsSelectable="false"
+            android:textSize="20sp"
+            android:visibility="visible"
+            app:pinDelayMasking="@integer/pin_delay_masking"
+            app:pinLineColors="@color/pin_line_colors" />
     </LinearLayout>
 </ScrollView>
