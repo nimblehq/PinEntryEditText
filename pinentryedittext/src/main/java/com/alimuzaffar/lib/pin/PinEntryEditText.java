@@ -21,6 +21,7 @@ import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.*;
 import android.graphics.drawable.Drawable;
+import android.os.CountDownTimer;
 import android.text.*;
 import android.util.AttributeSet;
 import android.util.TypedValue;
@@ -56,6 +57,7 @@ public class PinEntryEditText extends AppCompatEditText {
     protected Drawable mPinBackground;
     protected Rect mTextHeight = new Rect();
     protected boolean mIsDigitSquare = false;
+    protected int mDelayMasking = 0;
 
     protected OnClickListener mClickListener;
     protected OnPinEnteredListener mOnPinEnteredListener = null;
@@ -81,6 +83,9 @@ public class PinEntryEditText extends AppCompatEditText {
     };
 
     protected ColorStateList mColorStates = new ColorStateList(mStates, mColors);
+
+    private boolean mIsMaskAll;
+    private CountDownTimer mMaskingCountDownTimer;
 
     public PinEntryEditText(Context context) {
         super(context);
@@ -109,6 +114,11 @@ public class PinEntryEditText extends AppCompatEditText {
     public void setMask(String mask) {
         mMask = mask;
         mMaskChars = null;
+        invalidate();
+    }
+
+    public void setDelayMasking(int delayMasking) {
+        mDelayMasking = delayMasking;
         invalidate();
     }
 
@@ -141,6 +151,7 @@ public class PinEntryEditText extends AppCompatEditText {
             if (colors != null) {
                 mColorStates = colors;
             }
+            mDelayMasking = ta.getInteger(R.styleable.PinEntryEditText_pinDelayMasking, 0);
         } finally {
             ta.recycle();
         }
@@ -210,6 +221,8 @@ public class PinEntryEditText extends AppCompatEditText {
         } else if ((getInputType() & InputType.TYPE_NUMBER_VARIATION_PASSWORD) == InputType.TYPE_NUMBER_VARIATION_PASSWORD && TextUtils.isEmpty(mMask)) {
             mMask = DEFAULT_MASK;
         }
+
+        mIsMaskAll = mDelayMasking == 0;
 
         if (!TextUtils.isEmpty(mMask)) {
             mMaskChars = getMaskChars();
@@ -394,10 +407,10 @@ public class PinEntryEditText extends AppCompatEditText {
     }
 
     private StringBuilder getMaskChars() {
-        if (mMaskChars == null) {
-            mMaskChars = new StringBuilder();
-        }
+        mMaskChars = new StringBuilder();
+
         int textLength = getText().length();
+
         while (mMaskChars.length() != textLength) {
             if (mMaskChars.length() < textLength) {
                 mMaskChars.append(mMask);
@@ -405,7 +418,31 @@ public class PinEntryEditText extends AppCompatEditText {
                 mMaskChars.deleteCharAt(mMaskChars.length() - 1);
             }
         }
+
+        if (!mIsMaskAll && mMaskChars.length() > 0) {
+            char last = getText().charAt(textLength - 1);
+            mMaskChars.replace(textLength - 1, textLength, String.valueOf(last));
+        }
+
         return mMaskChars;
+    }
+
+    private void countDownForDelayMasking() {
+        if (mMaskingCountDownTimer != null) {
+            mIsMaskAll = true;
+            mMaskingCountDownTimer.cancel();
+        }
+
+        mMaskingCountDownTimer = new CountDownTimer(mDelayMasking, mDelayMasking) {
+            public void onTick(long millisUntilFinished) {
+                mIsMaskAll = false;
+            }
+
+            public void onFinish() {
+                mIsMaskAll = true;
+                invalidate();
+            }
+        }.start();
     }
 
 
@@ -468,7 +505,7 @@ public class PinEntryEditText extends AppCompatEditText {
 
         // Show keyboard
         InputMethodManager inputMethodManager = (InputMethodManager) getContext()
-                .getSystemService(Context.INPUT_METHOD_SERVICE);
+            .getSystemService(Context.INPUT_METHOD_SERVICE);
         inputMethodManager.showSoftInput(this, 0);
     }
 
@@ -506,6 +543,15 @@ public class PinEntryEditText extends AppCompatEditText {
     @Override
     protected void onTextChanged(CharSequence text, final int start, int lengthBefore, final int lengthAfter) {
         setError(false);
+        if (!TextUtils.isEmpty(mMask)) {
+            if (lengthAfter > lengthBefore) {
+                // Start count down to mask last input character
+                countDownForDelayMasking();
+            } else {
+                // Always mask all characters when removing characters
+                mIsMaskAll = true;
+            }
+        }
         if (mLineCoords == null || !mAnimate) {
             if (mOnPinEnteredListener != null && text.length() == mMaxLength) {
                 mOnPinEnteredListener.onPinEntered(text);
