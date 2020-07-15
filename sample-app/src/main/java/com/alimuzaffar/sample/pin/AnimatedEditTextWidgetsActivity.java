@@ -2,11 +2,12 @@ package com.alimuzaffar.sample.pin;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
-import com.alimuzaffar.lib.pin.PinEntryEditText;
-
 import androidx.core.content.res.ResourcesCompat;
+
+import com.alimuzaffar.lib.pin.PinEntryEditText;
 
 public class AnimatedEditTextWidgetsActivity extends Activity {
 
@@ -59,6 +60,15 @@ public class AnimatedEditTextWidgetsActivity extends Activity {
             });
         }
 
+        final PinEntryEditText pinEntry4 = findViewById(R.id.txt_pin_entry4);
+        if (pinEntry4 != null) {
+            pinEntry4.setOnPinEnteredListener(new PinEntryEditText.OnPinEnteredListener() {
+                @Override
+                public void onPinEntered(CharSequence str) {
+                    Log.d("onPinEntered", str.toString());
+                }
+            });
+        }
     }
 
 }
