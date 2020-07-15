@@ -21,9 +21,11 @@ import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.graphics.*;
 import android.graphics.drawable.Drawable;
-import android.os.*;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.*;
-import android.util.*;
+import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.*;
 import android.view.animation.OvershootInterpolator;
 import android.view.inputmethod.InputMethodManager;
@@ -569,14 +571,14 @@ public class PinEntryEditText extends AppCompatEditText {
 
         if (lengthAfter > lengthBefore) {
             if (mAnimatedType == 0) {
-                animatePopIn();
+                animatePopIn(text);
             } else {
                 animateBottomUp(text, start);
             }
         }
     }
 
-    private void animatePopIn() {
+    private void animatePopIn(final CharSequence text) {
         ValueAnimator va = ValueAnimator.ofFloat(1, getPaint().getTextSize());
         va.setDuration(200);
         va.setInterpolator(new OvershootInterpolator());
@@ -588,13 +590,16 @@ public class PinEntryEditText extends AppCompatEditText {
             }
         });
         va.addListener(new Animator.AnimatorListener() {
+            private String value;
+
             @Override
             public void onAnimationStart(Animator animation) {
+                value = text.toString();
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (getText().length() == mMaxLength && mOnPinEnteredListener != null) {
+                if (value.length() == mMaxLength && mOnPinEnteredListener != null) {
                     mOnPinEnteredListener.onPinEntered(getText());
                 }
                 countDownForDelayMasking();
@@ -639,14 +644,16 @@ public class PinEntryEditText extends AppCompatEditText {
         final AnimatorSet set = new AnimatorSet();
 
         set.addListener(new Animator.AnimatorListener() {
+            private String value;
 
             @Override
             public void onAnimationStart(Animator animation) {
+                value = text.toString();
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (text.length() == mMaxLength && mOnPinEnteredListener != null) {
+                if (value.length() == mMaxLength && mOnPinEnteredListener != null) {
                     mOnPinEnteredListener.onPinEntered(getText());
                 }
                 countDownForDelayMasking();
